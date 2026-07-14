@@ -259,7 +259,7 @@
         <div class="chips" id="topicChips"></div>
       </div>
       <div class="filter-unit" id="posGroup" style="display:none;">
-        <span class="flabel">פוזיטיביות</span>
+        <span class="flabel">סנטימנט</span>
         <div class="chips" id="posChips"></div>
       </div>
       <div class="filter-unit" id="usThemGroup" style="display:none;">
@@ -308,8 +308,8 @@
 
   <div class="metrics-grid" id="metricsGrid" style="display:none;">
     <div class="chart-card">
-      <h3>מדד פוזיטיביות</h3>
-      <div style="position:relative;height:150px;"><canvas id="posChart" role="img" aria-label="גרף התפלגות מדד פוזיטיביות">מדד פוזיטיביות</canvas></div>
+      <h3>סנטימנט</h3>
+      <div style="position:relative;height:150px;"><canvas id="posChart" role="img" aria-label="גרף התפלגות סנטימנט">סנטימנט</canvas></div>
       <div class="legend-html" id="posLegend"></div>
     </div>
     <div class="chart-card">
@@ -358,7 +358,7 @@
   </div>
   <div class="metrics-grid" id="matricesGrid" style="display:none;grid-template-columns:1fr 1fr;">
     <div class="chart-card">
-      <h3>פוזיטיביות לפי נושא</h3>
+      <h3>סנטימנט לפי נושא</h3>
       <div id="posMatrix"></div>
     </div>
     <div class="chart-card">
@@ -397,7 +397,7 @@ const METRIC_CHARTS = [
   {key:'קיים איום/הפחדה', canvasId:'threatChart', legendId:'threatLegend', matrixId:'threatMatrix'},
   {key:'יש הצעה לפתרון', canvasId:'solutionChart', legendId:'solutionLegend', matrixId:'solutionMatrix'}
 ];
-const SERIES_COLORS = ['#7B2D8E','#E31C79','#B02490','#F08CB4','#4A4A4A','#0E9F8E','#E0A429'];
+const SERIES_COLORS = ['#7B2D8E','#E31C79','#2E86DE','#0E9F8E','#F2A93B','#4A4A4A','#8BC34A','#E74C3C'];
 const DEFAULT_SOURCE_URL = 'https://script.google.com/macros/s/AKfycbx3cWTVptfwgiIEnixe03ze0aHlSjqSS9ryiGahhZd0426arS2h5NISJ8fYvOEyg7y3/exec';
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
@@ -642,7 +642,7 @@ function renderKPIs(rows) {
     <div class="kpi-card"><div class="kpi-label">רשומות</div><div class="kpi-value">${fmtNum(rows.length)}</div></div>
     <div class="kpi-card"><div class="kpi-label">מעורבות מצטברת</div><div class="kpi-value grad">${fmtNum(engagement)}</div></div>
     <div class="kpi-card"><div class="kpi-label">חשיפה מצטברת</div><div class="kpi-value grad">${fmtNum(reach)}</div></div>
-    <div class="kpi-card"><div class="kpi-label">פוזיטיביות דומיננטית</div><div class="kpi-value" style="font-size:17px;">${dominant || '—'}</div><div class="kpi-sub">${withPos.length} רשומות מתויגות</div></div>
+    <div class="kpi-card"><div class="kpi-label">סנטימנט דומיננטי</div><div class="kpi-value" style="font-size:17px;">${dominant || '—'}</div><div class="kpi-sub">${withPos.length} רשומות מתויגות</div></div>
   `;
 }
 
@@ -815,7 +815,7 @@ function render() {
     if (pos) tags.push(`<span class="tag">${escapeHtml(pos)}</span>`);
     return `
     <div class="post">
-      <div class="signal-stripe" title="פוזיטיביות / אנחנו-הם / איום / פתרון">
+      <div class="signal-stripe" title="סנטימנט / אנחנו-הם / איום / פתרון">
         <div class="seg ${posOn}"></div><div class="seg ${usThemOn}"></div><div class="seg ${threatOn}"></div><div class="seg ${solutionOn}"></div>
       </div>
       <div class="post-main">
