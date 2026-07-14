@@ -105,6 +105,16 @@
   .legend-html .li{display:flex;align-items:center;gap:5px;}
   .legend-html .sw{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
   .no-data{font-size:12px;color:var(--ink-3);text-align:center;padding:30px 0;}
+  .acct-list{display:flex;flex-direction:column;gap:8px;}
+  .acct-row{display:grid;grid-template-columns:20px 24px 130px 1fr 60px;align-items:center;gap:8px;direction:ltr;}
+  .acct-rank{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-3);text-align:center;}
+  .acct-net-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;font-family:'Poppins',sans-serif;flex-shrink:0;}
+  .acct-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;}
+  .acct-name a{color:var(--ink);text-decoration:none;}
+  .acct-name a:hover{color:var(--pink);text-decoration:underline;}
+  .acct-bar-track{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;}
+  .acct-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--pink));}
+  .acct-value{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-2);text-align:left;}
 
   .loading-screen{
     position:fixed;inset:0;background:#fff;z-index:9999;
@@ -350,7 +360,7 @@
         <button class="op-btn" id="acctByCount" type="button">לפי מספר פוסטים</button>
       </div>
     </div>
-    <div style="position:relative;height:260px;"><canvas id="topAccountsChart" role="img" aria-label="גרף חשבונות מובילים">חשבונות מובילים</canvas></div>
+    <div id="topAccountsList" class="acct-list"></div>
   </div>
 
   <div class="feed-header" style="margin-bottom:6px;">
@@ -720,28 +730,49 @@ function renderMatrix(containerId, rows, metricKey) {
   container.innerHTML = html;
 }
 
+const NETWORK_BADGES = {
+  'אינסטגרם': {label:'IG', bg:'linear-gradient(45deg,#f58529,#dd2a7b,#8134af,#515bd4)'},
+  'טוויטר / X': {label:'X', bg:'#000000'},
+  'פייסבוק': {label:'f', bg:'#1877F2'},
+  'טיקטוק': {label:'TT', bg:'#000000'},
+  'יוטיוב': {label:'YT', bg:'#FF0000'},
+  'טלגרם': {label:'TG', bg:'#26A5E4'},
+  'אחר': {label:'?', bg:'#8C98A6'}
+};
+function networkBadge(network) {
+  const cfg = NETWORK_BADGES[network] || NETWORK_BADGES['אחר'];
+  return `<span class="acct-net-icon" style="background:${cfg.bg}" title="${escapeHtml(network)}">${cfg.label}</span>`;
+}
+
 function renderTopAccounts(rows) {
   const map = {};
   rows.forEach(r => {
     const name = r.authorName || r.authorId || 'לא ידוע';
-    if (!map[name]) map[name] = {engagement:0, count:0};
+    if (!map[name]) map[name] = {engagement:0, count:0, network:r.network, url:r.url};
     map[name].engagement += r.engagement;
     map[name].count += 1;
   });
   const sortKey = topAccountsMetric;
   const entries = Object.entries(map).sort((a,b) => b[1][sortKey] - a[1][sortKey]).slice(0,10);
-  destroyChart('topAccountsChart');
-  const canvasEl = document.getElementById('topAccountsChart');
-  if (!entries.length) { canvasEl.style.display = 'none'; return; }
-  canvasEl.style.display = 'block';
-  const barColor = sortKey === 'engagement' ? '#E31C79' : '#7B2D8E';
-  charts.topAccountsChart = new Chart(canvasEl, {
-    type:'bar',
-    data:{ labels: entries.map(e=>e[0]), datasets:[{ data: entries.map(e=>e[1][sortKey]), backgroundColor:barColor, borderRadius:4, maxBarThickness:20 }] },
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},
-      tooltip:{callbacks:{label: ctx => fmtNum(entries[ctx.dataIndex][1].engagement) + ' מעורבות · ' + fmtNum(entries[ctx.dataIndex][1].count) + ' פוסטים'}}},
-      scales:{ x:{ beginAtZero:true, grid:{color:'#EAEAEC'} }, y:{ grid:{display:false} } } }
-  });
+  const container = document.getElementById('topAccountsList');
+  if (!entries.length) { container.innerHTML = '<div class="no-data">אין נתונים</div>'; return; }
+  const maxVal = entries[0][1][sortKey] || 1;
+  container.innerHTML = entries.map((e, i) => {
+    const [name, d] = e;
+    const val = d[sortKey];
+    const pct = Math.round((val / maxVal) * 100);
+    const nameHtml = d.url
+      ? `<a href="${d.url}" target="_blank" rel="noopener" title="${escapeHtml(name)}">${escapeHtml(name)}</a>`
+      : escapeHtml(name);
+    return `
+    <div class="acct-row">
+      <span class="acct-rank">${i+1}</span>
+      ${networkBadge(d.network)}
+      <span class="acct-name">${nameHtml}</span>
+      <div class="acct-bar-track"><div class="acct-bar-fill" style="width:${pct}%"></div></div>
+      <span class="acct-value">${fmtNum(val)}</span>
+    </div>`;
+  }).join('');
 }
 
 els.acctByEngagement.addEventListener('click', () => {
