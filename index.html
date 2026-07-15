@@ -100,6 +100,10 @@
   .charts-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:14px;}
   .chart-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
   .chart-card h3{font-family:'Poppins',sans-serif;font-weight:500;font-size:13.5px;margin:0 0 14px;color:var(--ink);}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+  .card-head h3{margin:0;}
+  .export-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-size:13px;line-height:1;cursor:pointer;user-select:none;}
+  .export-icon-btn:hover{border-color:var(--pink);color:var(--purple);background:var(--pink-light);}
   .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;}
   @media(max-width:900px){.charts-grid{grid-template-columns:1fr;}.metrics-grid{grid-template-columns:1fr 1fr;}}
   .legend-html{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:10px;font-size:11px;color:var(--ink-2);}
@@ -317,37 +321,40 @@
     </div>
   </div>
 
+  <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+    <span class="export-icon-btn" data-export-id="kpi" data-export-label="מדדים מרכזיים" title="ייצוא לאקסל">⬇</span>
+  </div>
   <div class="kpi-row" id="kpiRow" style="display:none;"></div>
 
   <div class="charts-grid" id="chartsGrid" style="display:none;">
     <div class="chart-card">
-      <h3>נפח פוסטים לאורך זמן</h3>
+      <div class="card-head"><h3>נפח פוסטים לאורך זמן</h3><span class="export-icon-btn" data-export-id="timeChart" data-export-label="נפח פוסטים לאורך זמן" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:230px;"><canvas id="timeChart" role="img" aria-label="גרף נפח פוסטים לפי תאריך">נפח פוסטים לאורך זמן</canvas></div>
     </div>
     <div class="chart-card">
-      <h3>נושאים מובילים</h3>
+      <div class="card-head"><h3>נושאים מובילים</h3><span class="export-icon-btn" data-export-id="topicChart" data-export-label="נושאים מובילים" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:230px;"><canvas id="topicChart" role="img" aria-label="גרף נושאים מובילים לפי כמות פוסטים">נושאים מובילים</canvas></div>
     </div>
   </div>
 
   <div class="metrics-grid" id="metricsGrid" style="display:none;">
     <div class="chart-card">
-      <h3>סנטימנט</h3>
+      <div class="card-head"><h3>סנטימנט</h3><span class="export-icon-btn" data-export-id="posChart" data-export-label="סנטימנט" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:150px;"><canvas id="posChart" role="img" aria-label="גרף התפלגות סנטימנט">סנטימנט</canvas></div>
       <div class="legend-html" id="posLegend"></div>
     </div>
     <div class="chart-card">
-      <h3>אנחנו או הם</h3>
+      <div class="card-head"><h3>אנחנו או הם</h3><span class="export-icon-btn" data-export-id="usThemChart" data-export-label="אנחנו או הם" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:150px;"><canvas id="usThemChart" role="img" aria-label="גרף התפלגות אנחנו או הם">אנחנו או הם</canvas></div>
       <div class="legend-html" id="usThemLegend"></div>
     </div>
     <div class="chart-card">
-      <h3>קיים איום/הפחדה</h3>
+      <div class="card-head"><h3>קיים איום/הפחדה</h3><span class="export-icon-btn" data-export-id="threatChart" data-export-label="קיים איום-הפחדה" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:150px;"><canvas id="threatChart" role="img" aria-label="גרף התפלגות קיום איום או הפחדה">קיים איום/הפחדה</canvas></div>
       <div class="legend-html" id="threatLegend"></div>
     </div>
     <div class="chart-card">
-      <h3>יש הצעה לפתרון</h3>
+      <div class="card-head"><h3>יש הצעה לפתרון</h3><span class="export-icon-btn" data-export-id="solutionChart" data-export-label="יש הצעה לפתרון" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:150px;"><canvas id="solutionChart" role="img" aria-label="גרף התפלגות קיום הצעה לפתרון">יש הצעה לפתרון</canvas></div>
       <div class="legend-html" id="solutionLegend"></div>
     </div>
@@ -355,12 +362,12 @@
 
   <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;">
     <div class="chart-card" id="networkCard" style="display:none;flex:1;min-width:280px;max-width:420px;">
-      <h3>התפלגות לפי רשת</h3>
+      <div class="card-head"><h3>התפלגות לפי רשת</h3><span class="export-icon-btn" data-export-id="networkChart" data-export-label="התפלגות לפי רשת" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:190px;"><canvas id="networkChart" role="img" aria-label="גרף התפלגות פוסטים לפי רשת חברתית">התפלגות לפי רשת</canvas></div>
       <div class="legend-html" id="networkLegend"></div>
     </div>
     <div class="chart-card" id="postTypeCard" style="display:none;flex:1;min-width:280px;max-width:420px;">
-      <h3>התפלגות לפי סוג פוסט</h3>
+      <div class="card-head"><h3>התפלגות לפי סוג פוסט</h3><span class="export-icon-btn" data-export-id="postTypeChart" data-export-label="התפלגות לפי סוג פוסט" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:190px;"><canvas id="postTypeChart" role="img" aria-label="גרף התפלגות פוסטים לפי סוג">התפלגות לפי סוג פוסט</canvas></div>
       <div class="legend-html" id="postTypeLegend"></div>
     </div>
@@ -384,6 +391,7 @@
         <option value="threatPct">אחוז עם איום/הפחדה</option>
         <option value="solutionPct">אחוז יש הצעה לפתרון</option>
       </select>
+      <span class="export-icon-btn" data-export-id="topAccountsList" data-export-label="חשבונות מובילים" title="ייצוא לאקסל">⬇</span>
       </div>
     </div>
     <div id="topAccountsList" class="acct-list"></div>
@@ -394,19 +402,19 @@
   </div>
   <div class="metrics-grid" id="matricesGrid" style="display:none;grid-template-columns:1fr 1fr;">
     <div class="chart-card">
-      <h3>סנטימנט לפי נושא</h3>
+      <div class="card-head"><h3>סנטימנט לפי נושא</h3><span class="export-icon-btn" data-export-id="posMatrix" data-export-label="סנטימנט לפי נושא" title="ייצוא לאקסל">⬇</span></div>
       <div id="posMatrix"></div>
     </div>
     <div class="chart-card">
-      <h3>אנחנו או הם לפי נושא</h3>
+      <div class="card-head"><h3>אנחנו או הם לפי נושא</h3><span class="export-icon-btn" data-export-id="usThemMatrix" data-export-label="אנחנו או הם לפי נושא" title="ייצוא לאקסל">⬇</span></div>
       <div id="usThemMatrix"></div>
     </div>
     <div class="chart-card">
-      <h3>איום/הפחדה לפי נושא</h3>
+      <div class="card-head"><h3>איום/הפחדה לפי נושא</h3><span class="export-icon-btn" data-export-id="threatMatrix" data-export-label="איום-הפחדה לפי נושא" title="ייצוא לאקסל">⬇</span></div>
       <div id="threatMatrix"></div>
     </div>
     <div class="chart-card">
-      <h3>הצעת פתרון לפי נושא</h3>
+      <div class="card-head"><h3>הצעת פתרון לפי נושא</h3><span class="export-icon-btn" data-export-id="solutionMatrix" data-export-label="הצעת פתרון לפי נושא" title="ייצוא לאקסל">⬇</span></div>
       <div id="solutionMatrix"></div>
     </div>
   </div>
@@ -416,19 +424,19 @@
   </div>
   <div class="metrics-grid" id="partyMatricesGrid" style="display:none;grid-template-columns:1fr 1fr;">
     <div class="chart-card">
-      <h3>סנטימנט לפי מפלגה</h3>
+      <div class="card-head"><h3>סנטימנט לפי מפלגה</h3><span class="export-icon-btn" data-export-id="posPartyMatrix" data-export-label="סנטימנט לפי מפלגה" title="ייצוא לאקסל">⬇</span></div>
       <div id="posPartyMatrix"></div>
     </div>
     <div class="chart-card">
-      <h3>אנחנו או הם לפי מפלגה</h3>
+      <div class="card-head"><h3>אנחנו או הם לפי מפלגה</h3><span class="export-icon-btn" data-export-id="usThemPartyMatrix" data-export-label="אנחנו או הם לפי מפלגה" title="ייצוא לאקסל">⬇</span></div>
       <div id="usThemPartyMatrix"></div>
     </div>
     <div class="chart-card">
-      <h3>איום/הפחדה לפי מפלגה</h3>
+      <div class="card-head"><h3>איום/הפחדה לפי מפלגה</h3><span class="export-icon-btn" data-export-id="threatPartyMatrix" data-export-label="איום-הפחדה לפי מפלגה" title="ייצוא לאקסל">⬇</span></div>
       <div id="threatPartyMatrix"></div>
     </div>
     <div class="chart-card">
-      <h3>הצעת פתרון לפי מפלגה</h3>
+      <div class="card-head"><h3>הצעת פתרון לפי מפלגה</h3><span class="export-icon-btn" data-export-id="solutionPartyMatrix" data-export-label="הצעת פתרון לפי מפלגה" title="ייצוא לאקסל">⬇</span></div>
       <div id="solutionPartyMatrix"></div>
     </div>
   </div>
@@ -536,6 +544,7 @@ let topAccountsViewMode = 'party';
 let filters = {networks:new Set(), postTypes:new Set(), parties:new Set(), dateFrom:'', dateTo:'', phrase1:'', phrase2:'', op:'and'};
 EXTRA_FILTER_FIELDS.forEach(f => filters[f.key] = new Set());
 let charts = {};
+let componentExportData = {};
 
 const els = {};
 ['sourceUrl','loadBtn','statusMsg','helpBox','filters','kpiRow','chartsGrid','metricsGrid','networkCard',
@@ -795,6 +804,13 @@ function renderKPIs(rows) {
   const reach = rows.reduce((s,r)=>s+r.reach,0);
   const withPos = rows.filter(r=>r.extra['מדד פוזיטיביות']);
   const dominant = mostCommon(rows.map(r=>r.extra['מדד פוזיטיביות']).filter(Boolean));
+  componentExportData.kpi = [{
+    'רשומות': rows.length,
+    'מעורבות מצטברת': engagement,
+    'חשיפה מצטברת': reach,
+    'סנטימנט דומיננטי': dominant || '',
+    'רשומות מתויגות סנטימנט': withPos.length
+  }];
   els.kpiRow.innerHTML = `
     <div class="kpi-card"><div class="kpi-label">רשומות</div><div class="kpi-value">${fmtNum(rows.length)}</div></div>
     <div class="kpi-card"><div class="kpi-label">מעורבות מצטברת</div><div class="kpi-value grad">${fmtNum(engagement)}</div></div>
@@ -818,6 +834,7 @@ function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete chart
 
 function renderDonut(canvasId, legendId, map, chipsId) {
   const keys = Object.keys(map);
+  componentExportData[canvasId] = keys.map(k => ({ 'קטגוריה': k, 'כמות': map[k] }));
   destroyChart(canvasId);
   const legendEl = document.getElementById(legendId);
   const canvasEl = document.getElementById(canvasId);
@@ -913,6 +930,15 @@ function renderMatrix(containerId, rows, metricKey, opts) {
     if (t && v && matrix[t] && matrix[t][v] !== undefined) matrix[t][v]++;
   });
 
+  componentExportData[containerId] = rowKeys.map(t => {
+    const row = {};
+    row[headerLabel] = t;
+    let rowSum = 0;
+    values.forEach(v => { row[v] = matrix[t][v]; rowSum += matrix[t][v]; });
+    row['סה"כ'] = rowSum;
+    return row;
+  });
+
   let html = '<table class="matrix-table"><thead><tr><th>' + escapeHtml(headerLabel) + '</th>' +
     values.map(v => `<th>${escapeHtml(v)}</th>`).join('') + '<th>סה"כ</th></tr></thead><tbody>';
   rowKeys.forEach(t => {
@@ -1001,6 +1027,19 @@ function renderTopAccounts(rows) {
       : '<div class="no-data">אין נתונים</div>';
     return;
   }
+  componentExportData.topAccountsList = entries.map(([name, d], i) => ({
+    'דירוג': i + 1,
+    [byParty ? 'מפלגה' : 'חשבון']: name,
+    'רשת': d.network || '',
+    'פוסטים': d.count,
+    'מעורבות': d.engagement,
+    'אחוז סנטימנט חיובי': d.count ? Math.round((d.pos / d.count) * 100) : 0,
+    'אחוז סנטימנט שלילי': d.count ? Math.round((d.neg / d.count) * 100) : 0,
+    'אחוז אנחנו': d.count ? Math.round((d.us / d.count) * 100) : 0,
+    'אחוז הם': d.count ? Math.round((d.them / d.count) * 100) : 0,
+    'אחוז עם איום/הפחדה': d.count ? Math.round((d.threat / d.count) * 100) : 0,
+    'אחוז יש הצעה לפתרון': d.count ? Math.round((d.solution / d.count) * 100) : 0
+  }));
   const maxVal = entries[0][2] || 1;
   container.innerHTML = entries.map((e, i) => {
     const [name, d, val] = e;
@@ -1040,6 +1079,7 @@ function renderCharts(rows) {
   const dayMap = {};
   rows.forEach(r => { if (r.published) { const k = r.published.toISOString().slice(0,10); dayMap[k] = (dayMap[k]||0)+1; } });
   const days = Object.keys(dayMap).sort();
+  componentExportData.timeChart = days.map(d => ({ 'תאריך': d, 'פוסטים': dayMap[d] }));
   destroyChart('timeChart');
   charts.timeChart = new Chart(document.getElementById('timeChart'), {
     type:'line',
@@ -1061,6 +1101,7 @@ function renderCharts(rows) {
 
   const topicMap = groupCount(rows, r => r.extra['נושא']);
   const topicEntries = Object.entries(topicMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  componentExportData.topicChart = topicEntries.map(([topic, count]) => ({ 'נושא': topic, 'פוסטים': count }));
   destroyChart('topicChart');
   if (topicEntries.length) {
     charts.topicChart = new Chart(document.getElementById('topicChart'), {
@@ -1165,6 +1206,24 @@ function exportToExcel() {
 }
 
 els.exportExcelBtn.addEventListener('click', exportToExcel);
+
+function exportComponentToExcel(componentId, label) {
+  if (typeof XLSX === 'undefined') { alert('ספריית הייצוא לאקסל לא נטענה (בדקו חיבור לאינטרנט).'); return; }
+  const data = componentExportData[componentId];
+  if (!data || !data.length) { alert('אין נתונים לייצוא עבור רכיב זה בטווח הנוכחי'); return; }
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] };
+  const sheetName = (label || componentId).slice(0, 31);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `${label || componentId}_${dateStr}.xlsx`);
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.export-icon-btn');
+  if (!btn) return;
+  exportComponentToExcel(btn.dataset.exportId, btn.dataset.exportLabel);
+});
 
 els.loadBtn.addEventListener('click', () => loadData());
 els.sourceUrl.value = DEFAULT_SOURCE_URL;
