@@ -172,6 +172,8 @@
 
   .empty-state{text-align:center;padding:60px 20px;color:var(--ink-3);border:1px dashed var(--line);border-radius:12px;background:var(--card);}
   .empty-state .big{font-family:'Poppins',sans-serif;font-size:16px;color:var(--ink);margin-bottom:6px;}
+  .acct-select{background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-family:'Heebo',sans-serif;font-size:12px;padding:6px 10px;cursor:pointer;}
+  .acct-select:focus{outline:none;border-color:var(--pink);}
 </style>
 </head>
 <body>
@@ -355,10 +357,16 @@
   <div class="chart-card" style="margin-bottom:14px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
       <h3 style="margin:0;">חשבונות מובילים</h3>
-      <div class="op-toggle">
-        <button class="op-btn active" id="acctByEngagement" type="button">לפי מעורבות</button>
-        <button class="op-btn" id="acctByCount" type="button">לפי מספר פוסטים</button>
-      </div>
+            <select class="acct-select" id="acctSortSelect">
+        <option value="engagement" selected>לפי מעורבות</option>
+        <option value="count">לפי מספר פוסטים</option>
+        <option value="posPct">אחוז סנטימנט חיובי</option>
+        <option value="negPct">אחוז סנטימנט שלילי</option>
+        <option value="usPct">אחוז אנחנו</option>
+        <option value="themPct">אחוז הם</option>
+        <option value="threatPct">אחוז עם איום/הפחדה</option>
+        <option value="solutionPct">אחוז יש הצעה לפתרון</option>
+      </select>
     </div>
     <div id="topAccountsList" class="acct-list"></div>
   </div>
@@ -411,6 +419,17 @@ const SERIES_COLORS = ['#7B2D8E','#E31C79','#2E86DE','#0E9F8E','#F2A93B','#4A4A4
 const DEFAULT_SOURCE_URL = 'https://script.google.com/macros/s/AKfycbx3cWTVptfwgiIEnixe03ze0aHlSjqSS9ryiGahhZd0426arS2h5NISJ8fYvOEyg7y3/exec';
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
+const ACCOUNT_METRICS = [
+  {key:'engagement', label:'לפי מעורבות', pct:false},
+  {key:'count', label:'לפי מספר פוסטים', pct:false},
+  {key:'posPct', label:'אחוז סנטימנט חיובי', pct:true},
+  {key:'negPct', label:'אחוז סנטימנט שלילי', pct:true},
+  {key:'usPct', label:'אחוז אנחנו', pct:true},
+  {key:'themPct', label:'אחוז הם', pct:true},
+  {key:'threatPct', label:'אחוז עם איום/הפחדה', pct:true},
+  {key:'solutionPct', label:'אחוז יש הצעה לפתרון', pct:true}
+];
+const ACCOUNT_MIN_POSTS_FOR_PCT = 10;
 let allRows = [];
 let lastFilteredRows = [];
 let topAccountsMetric = 'engagement';
@@ -422,7 +441,7 @@ const els = {};
 ['sourceUrl','loadBtn','statusMsg','helpBox','filters','kpiRow','chartsGrid','metricsGrid','networkCard',
  'networkChips','dateFrom','dateTo','clearFilters','filterCount','countRow','feed',
  'networkLegend','sourceBar','phrase1','phrase2','opAnd','opOr','quick7','quick30',
- 'postTypeChips','postTypeCard','matricesGrid','acctByEngagement','acctByCount','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
+ 'postTypeChips','postTypeCard','matricesGrid','acctSortSelect','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
 
 function detectNetwork(url) {
   if (!url) return 'אחר';
@@ -744,23 +763,62 @@ function networkBadge(network) {
   return `<span class="acct-net-icon" style="background:${cfg.bg}" title="${escapeHtml(network)}">${cfg.label}</span>`;
 }
 
+function computeAccountValue(d, metricKey) {
+  switch (metricKey) {
+    case 'engagement': return d.engagement;
+    case 'count': return d.count;
+    case 'posPct': return d.count ? (d.pos / d.count) * 100 : 0;
+    case 'negPct': return d.count ? (d.neg / d.count) * 100 : 0;
+    case 'usPct': return d.count ? (d.us / d.count) * 100 : 0;
+    case 'themPct': return d.count ? (d.them / d.count) * 100 : 0;
+    case 'threatPct': return d.count ? (d.threat / d.count) * 100 : 0;
+    case 'solutionPct': return d.count ? (d.solution / d.count) * 100 : 0;
+    default: return d.engagement;
+  }
+}
+
 function renderTopAccounts(rows) {
   const map = {};
   rows.forEach(r => {
     const name = r.authorName || r.authorId || 'לא ידוע';
-    if (!map[name]) map[name] = {engagement:0, count:0, network:r.network, url:r.url};
-    map[name].engagement += r.engagement;
-    map[name].count += 1;
+    if (!map[name]) map[name] = {engagement:0, count:0, network:r.network, url:r.url, pos:0, neg:0, us:0, them:0, threat:0, solution:0};
+    const d = map[name];
+    d.engagement += r.engagement;
+    d.count += 1;
+
+    const sentiment = r.extra['מדד פוזיטיביות'] || '';
+    if (sentiment.includes('חיוב')) d.pos++;
+    if (sentiment.includes('שליל')) d.neg++;
+
+    const usThem = r.extra['אנחנו או הם'] || '';
+    if (usThem === 'אנחנו') d.us++;
+    if (usThem === 'הם') d.them++;
+
+    if (/^כן|yes/i.test(r.extra['קיים איום/הפחדה'] || '')) d.threat++;
+    if (/^כן|yes/i.test(r.extra['יש הצעה לפתרון'] || '')) d.solution++;
   });
-  const sortKey = topAccountsMetric;
-  const entries = Object.entries(map).sort((a,b) => b[1][sortKey] - a[1][sortKey]).slice(0,10);
+
+  const metricCfg = ACCOUNT_METRICS.find(m => m.key === topAccountsMetric) || ACCOUNT_METRICS[0];
+  let entries = Object.entries(map);
+  if (metricCfg.pct) entries = entries.filter(([, d]) => d.count > ACCOUNT_MIN_POSTS_FOR_PCT);
+
+  entries = entries
+    .map(([name, d]) => [name, d, computeAccountValue(d, metricCfg.key)])
+    .sort((a, b) => b[2] - a[2])
+    .slice(0, 10);
+
   const container = document.getElementById('topAccountsList');
-  if (!entries.length) { container.innerHTML = '<div class="no-data">אין נתונים</div>'; return; }
-  const maxVal = entries[0][1][sortKey] || 1;
+  if (!entries.length) {
+    container.innerHTML = metricCfg.pct
+      ? `<div class="no-data">אין חשבונות עם יותר מ-${ACCOUNT_MIN_POSTS_FOR_PCT} פוסטים בטווח הנוכחי</div>`
+      : '<div class="no-data">אין נתונים</div>';
+    return;
+  }
+  const maxVal = entries[0][2] || 1;
   container.innerHTML = entries.map((e, i) => {
-    const [name, d] = e;
-    const val = d[sortKey];
-    const pct = Math.round((val / maxVal) * 100);
+    const [name, d, val] = e;
+    const pct = metricCfg.pct ? Math.min(100, Math.max(0, val)) : Math.round((val / maxVal) * 100);
+    const displayVal = metricCfg.pct ? Math.round(val) + '%' : fmtNum(val);
     const nameHtml = d.url
       ? `<a href="${d.url}" target="_blank" rel="noopener" title="${escapeHtml(name)}">${escapeHtml(name)}</a>`
       : escapeHtml(name);
@@ -770,19 +828,13 @@ function renderTopAccounts(rows) {
       ${networkBadge(d.network)}
       <span class="acct-name">${nameHtml}</span>
       <div class="acct-bar-track"><div class="acct-bar-fill" style="width:${pct}%"></div></div>
-      <span class="acct-value">${fmtNum(val)}</span>
+      <span class="acct-value">${displayVal}</span>
     </div>`;
   }).join('');
 }
 
-els.acctByEngagement.addEventListener('click', () => {
-  topAccountsMetric = 'engagement';
-  els.acctByEngagement.classList.add('active'); els.acctByCount.classList.remove('active');
-  renderTopAccounts(lastFilteredRows);
-});
-els.acctByCount.addEventListener('click', () => {
-  topAccountsMetric = 'count';
-  els.acctByCount.classList.add('active'); els.acctByEngagement.classList.remove('active');
+els.acctSortSelect.addEventListener('change', () => {
+  topAccountsMetric = els.acctSortSelect.value;
   renderTopAccounts(lastFilteredRows);
 });
 
