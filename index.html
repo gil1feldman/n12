@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Heebo:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --purple:#7B2D8E;
@@ -174,6 +175,11 @@
   .empty-state .big{font-family:'Poppins',sans-serif;font-size:16px;color:var(--ink);margin-bottom:6px;}
   .acct-select{background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-family:'Heebo',sans-serif;font-size:12px;padding:6px 10px;cursor:pointer;}
   .acct-select:focus{outline:none;border-color:var(--pink);}
+  .filter-tooltip{position:fixed;z-index:5000;background:var(--ink);color:#fff;border-radius:8px;padding:10px 12px;font-size:12.5px;box-shadow:0 6px 20px rgba(0,0,0,0.25);display:none;direction:rtl;max-width:220px;}
+  .filter-tooltip .ft-label{margin-bottom:8px;line-height:1.5;}
+  .filter-tooltip .ft-label b{color:#F0B8D6;}
+  .filter-tooltip button{background:linear-gradient(90deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;padding:6px 14px;border-radius:6px;cursor:pointer;width:100%;}
+  .filter-tooltip button:hover{opacity:0.9;}
 </style>
 </head>
 <body>
@@ -393,13 +399,18 @@
     </div>
   </div>
 
-  <div class="feed-header">
+    <div class="feed-header">
     <h2>הפוסטים</h2>
-    <span class="count-row" id="countRow"></span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="btn" id="exportExcelBtn" type="button">ייצוא לאקסל</button>
+      <span class="count-row" id="countRow"></span>
+    </div>
   </div>
   <div id="feed"></div>
 
 </div>
+
+<div id="chartFilterTooltip" class="filter-tooltip"></div>
 
 <script>
 const EXTRA_FILTER_FIELDS = [
@@ -441,7 +452,7 @@ const els = {};
 ['sourceUrl','loadBtn','statusMsg','helpBox','filters','kpiRow','chartsGrid','metricsGrid','networkCard',
  'networkChips','dateFrom','dateTo','clearFilters','filterCount','countRow','feed',
  'networkLegend','sourceBar','phrase1','phrase2','opAnd','opOr','quick7','quick30',
- 'postTypeChips','postTypeCard','matricesGrid','acctSortSelect','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
+ 'postTypeChips','postTypeCard','matricesGrid','acctSortSelect','exportExcelBtn','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
 
 function detectNetwork(url) {
   if (!url) return 'אחר';
@@ -688,7 +699,7 @@ function groupCount(rows, keyFn) {
 }
 function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
-function renderDonut(canvasId, legendId, map) {
+function renderDonut(canvasId, legendId, map, chipsId) {
   const keys = Object.keys(map);
   destroyChart(canvasId);
   const legendEl = document.getElementById(legendId);
@@ -702,10 +713,59 @@ function renderDonut(canvasId, legendId, map) {
   charts[canvasId] = new Chart(canvasEl, {
     type:'doughnut',
     data:{ labels: keys, datasets:[{ data: keys.map(k=>map[k]), backgroundColor: keys.map((_,i)=>SERIES_COLORS[i%SERIES_COLORS.length]), borderColor:'#fff', borderWidth:2 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      onClick:(evt, elements) => {
+        if (!elements.length || !chipsId) return;
+        const label = keys[elements[0].index];
+        showFilterTooltip(evt.native, chipsId, label);
+      }
+    }
   });
   const total = keys.reduce((s,k)=>s+map[k],0) || 1;
   legendEl.innerHTML = keys.map((k,i)=>`<span class="li"><span class="sw" style="background:${SERIES_COLORS[i%SERIES_COLORS.length]}"></span>${escapeHtml(k)} ${Math.round(map[k]/total*100)}%</span>`).join('');
+}
+
+function findChipElement(chipsId, label) {
+  const container = document.getElementById(chipsId);
+  if (!container) return null;
+  return Array.from(container.children).find(el => el.textContent === label) || null;
+}
+
+let filterTooltipOutsideHandler = null;
+
+function hideFilterTooltip() {
+  const el = document.getElementById('chartFilterTooltip');
+  if (el) el.style.display = 'none';
+  if (filterTooltipOutsideHandler) {
+    document.removeEventListener('click', filterTooltipOutsideHandler, true);
+    filterTooltipOutsideHandler = null;
+  }
+}
+
+function showFilterTooltip(nativeEvent, chipsId, label) {
+  const chipEl = findChipElement(chipsId, label);
+  if (!chipEl) return;
+  const tooltip = document.getElementById('chartFilterTooltip');
+  if (!tooltip) return;
+  const isActive = chipEl.classList.contains('active');
+  tooltip.innerHTML = `<div class="ft-label">${isActive ? 'ביטול סינון לפי' : 'הפעלת סינון לפי'}<br><b>${escapeHtml(label)}</b></div><button type="button">${isActive ? 'בטל סינון' : 'הפעל סינון'}</button>`;
+  tooltip.style.display = 'block';
+  const x = nativeEvent ? nativeEvent.clientX : 0;
+  const y = nativeEvent ? nativeEvent.clientY : 0;
+  const tw = tooltip.offsetWidth || 180;
+  const left = Math.min(Math.max(8, x - tw / 2), window.innerWidth - tw - 8);
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = (y + 12) + 'px';
+  tooltip.querySelector('button').addEventListener('click', () => {
+    chipEl.click();
+    hideFilterTooltip();
+  });
+  setTimeout(() => {
+    filterTooltipOutsideHandler = (e) => {
+      if (!tooltip.contains(e.target)) hideFilterTooltip();
+    };
+    document.addEventListener('click', filterTooltipOutsideHandler, true);
+  }, 0);
 }
 
 function renderMatrix(containerId, rows, metricKey) {
@@ -851,9 +911,12 @@ function renderCharts(rows) {
       scales:{ y:{ beginAtZero:true, grid:{color:'#EAEAEC'} }, x:{ grid:{display:false} } } }
   });
 
-  renderDonut('networkChart', 'networkLegend', groupCount(rows, r => r.network));
-  renderDonut('postTypeChart', 'postTypeLegend', groupCount(rows, r => r.post_type));
-  METRIC_CHARTS.forEach(m => renderDonut(m.canvasId, m.legendId, groupCount(rows, r => r.extra[m.key])));
+  renderDonut('networkChart', 'networkLegend', groupCount(rows, r => r.network), 'networkChips');
+  renderDonut('postTypeChart', 'postTypeLegend', groupCount(rows, r => r.post_type), 'postTypeChips');
+  METRIC_CHARTS.forEach(m => {
+    const chipsId = (EXTRA_FILTER_FIELDS.find(f => f.key === m.key) || {}).chipsId;
+    renderDonut(m.canvasId, m.legendId, groupCount(rows, r => r.extra[m.key]), chipsId);
+  });
   renderTopAccounts(rows);
   METRIC_CHARTS.forEach(m => renderMatrix(m.matrixId, rows, m.key));
 
@@ -865,7 +928,13 @@ function renderCharts(rows) {
       type:'bar',
       data:{ labels: topicEntries.map(e=>e[0]), datasets:[{ data: topicEntries.map(e=>e[1]), backgroundColor:'#7B2D8E', borderRadius:4, maxBarThickness:22 }] },
       options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-        scales:{ x:{ beginAtZero:true, grid:{color:'#EAEAEC'} }, y:{ grid:{display:false} } } }
+        scales:{ x:{ beginAtZero:true, grid:{color:'#EAEAEC'} }, y:{ grid:{display:false} } },
+        onClick:(evt, elements) => {
+          if (!elements.length) return;
+          const label = topicEntries[elements[0].index][0];
+          showFilterTooltip(evt.native, 'topicChips', label);
+        }
+      }
     });
   }
 }
@@ -927,6 +996,34 @@ function toggleExpand(i) {
   el.classList.toggle('expanded');
   btn.textContent = el.classList.contains('expanded') ? 'הצג פחות' : 'הצג עוד';
 }
+
+function exportToExcel() {
+  if (typeof XLSX === 'undefined') { alert('ספריית הייצוא לאקסל לא נטענה (בדקו חיבור לאינטרנט).'); return; }
+  if (!lastFilteredRows.length) { alert('אין נתונים מסוננים לייצוא'); return; }
+  const data = lastFilteredRows.map(r => ({
+    'שם/מזהה': r.authorName || r.authorId || '',
+    'רשת': r.network,
+    'סוג פוסט': r.post_type,
+    'תאריך פרסום': r.published ? fmtDateTime(r.published) : '',
+    'תוכן': r.content,
+    'מעורבות': r.engagement,
+    'חשיפה': r.reach,
+    'נושא': r.extra['נושא'] || '',
+    'סנטימנט': r.extra['מדד פוזיטיביות'] || '',
+    'אנחנו או הם': r.extra['אנחנו או הם'] || '',
+    'איום/הפחדה': r.extra['קיים איום/הפחדה'] || '',
+    'הצעת פתרון': r.extra['יש הצעה לפתרון'] || '',
+    'קישור': r.url
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] };
+  XLSX.utils.book_append_sheet(wb, ws, 'פוסטים');
+  const dateStr = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `פוסטים_${dateStr}.xlsx`);
+}
+
+els.exportExcelBtn.addEventListener('click', exportToExcel);
 
 els.loadBtn.addEventListener('click', () => loadData());
 els.sourceUrl.value = DEFAULT_SOURCE_URL;
