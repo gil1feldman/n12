@@ -272,6 +272,12 @@
         <div class="chips" id="postTypeChips"></div>
       </div>
       <div class="divider"></div>
+      <div class="filter-unit">
+        <span class="flabel">מפלגה</span>
+        <div class="chips" id="partyChips"></div>
+        <span class="chip" id="showUnassignedBtn" style="border-style:dashed;">הצג רק ללא מפלגה</span>
+      </div>
+      <div class="divider"></div>
       <div class="filter-unit" id="topicGroup" style="display:none;">
         <span class="flabel">נושא</span>
         <div class="chips" id="topicChips"></div>
@@ -362,7 +368,12 @@
 
   <div class="chart-card" style="margin-bottom:14px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-      <h3 style="margin:0;">חשבונות מובילים</h3>
+      <h3 style="margin:0;" id="topAccountsTitle">מפלגות מובילות</h3>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="chips" id="viewModeChips">
+          <span class="chip active" id="viewByParty">לפי מפלגה</span>
+          <span class="chip" id="viewByAccount">לפי חשבון</span>
+        </div>
             <select class="acct-select" id="acctSortSelect">
         <option value="engagement" selected>לפי מעורבות</option>
         <option value="count">לפי מספר פוסטים</option>
@@ -373,6 +384,7 @@
         <option value="threatPct">אחוז עם איום/הפחדה</option>
         <option value="solutionPct">אחוז יש הצעה לפתרון</option>
       </select>
+      </div>
     </div>
     <div id="topAccountsList" class="acct-list"></div>
   </div>
@@ -399,6 +411,28 @@
     </div>
   </div>
 
+  <div class="feed-header" style="margin-bottom:6px;">
+    <h2>התפלגות מדדים לפי מפלגה</h2>
+  </div>
+  <div class="metrics-grid" id="partyMatricesGrid" style="display:none;grid-template-columns:1fr 1fr;">
+    <div class="chart-card">
+      <h3>סנטימנט לפי מפלגה</h3>
+      <div id="posPartyMatrix"></div>
+    </div>
+    <div class="chart-card">
+      <h3>אנחנו או הם לפי מפלגה</h3>
+      <div id="usThemPartyMatrix"></div>
+    </div>
+    <div class="chart-card">
+      <h3>איום/הפחדה לפי מפלגה</h3>
+      <div id="threatPartyMatrix"></div>
+    </div>
+    <div class="chart-card">
+      <h3>הצעת פתרון לפי מפלגה</h3>
+      <div id="solutionPartyMatrix"></div>
+    </div>
+  </div>
+
     <div class="feed-header">
     <h2>הפוסטים</h2>
     <div style="display:flex;align-items:center;gap:10px;">
@@ -421,14 +455,68 @@ const EXTRA_FILTER_FIELDS = [
   {key:'יש הצעה לפתרון', chipsId:'solutionChips', groupId:'solutionGroup'}
 ];
 const METRIC_CHARTS = [
-  {key:'מדד פוזיטיביות', canvasId:'posChart', legendId:'posLegend', matrixId:'posMatrix'},
-  {key:'אנחנו או הם', canvasId:'usThemChart', legendId:'usThemLegend', matrixId:'usThemMatrix'},
-  {key:'קיים איום/הפחדה', canvasId:'threatChart', legendId:'threatLegend', matrixId:'threatMatrix'},
-  {key:'יש הצעה לפתרון', canvasId:'solutionChart', legendId:'solutionLegend', matrixId:'solutionMatrix'}
+  {key:'מדד פוזיטיביות', canvasId:'posChart', legendId:'posLegend', matrixId:'posMatrix', partyMatrixId:'posPartyMatrix'},
+  {key:'אנחנו או הם', canvasId:'usThemChart', legendId:'usThemLegend', matrixId:'usThemMatrix', partyMatrixId:'usThemPartyMatrix'},
+  {key:'קיים איום/הפחדה', canvasId:'threatChart', legendId:'threatLegend', matrixId:'threatMatrix', partyMatrixId:'threatPartyMatrix'},
+  {key:'יש הצעה לפתרון', canvasId:'solutionChart', legendId:'solutionLegend', matrixId:'solutionMatrix', partyMatrixId:'solutionPartyMatrix'}
 ];
 const SERIES_COLORS = ['#7B2D8E','#E31C79','#2E86DE','#0E9F8E','#F2A93B','#4A4A4A','#8BC34A','#E74C3C'];
 const DEFAULT_SOURCE_URL = 'https://script.google.com/macros/s/AKfycbx3cWTVptfwgiIEnixe03ze0aHlSjqSS9ryiGahhZd0426arS2h5NISJ8fYvOEyg7y3/exec';
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+const PARTY_MAP = {
+  'fb:178433145502975': 'ישראל ביתנו',
+  'tiktok_7185185408682607617': 'ישראל ביתנו',
+  'ig:974956819': 'הליכוד',
+  'tiktok_7136864300157469698': 'הציונות הדתית',
+  'fb:268108602075': 'הליכוד',
+  'tiktok_6867491921787683845': 'הליכוד',
+  'tw:1955741711235420160': 'ישר!',
+  'tiktok_7538180088027448327': 'ישר!',
+  'tiktok_7471947913372926983': 'הדמוקרטים',
+  'tiktok_6940586190836646914': 'עוצמה יהודית',
+  'insta_3952337840': 'רעמ',
+  'tw:13197402': 'ביחד',
+  'ig:1608065371': 'ביחד',
+  'tiktok_6910901510198084614': 'ביחד',
+  'ig:1294633504': 'עוצמה יהודית',
+  'fb:1151110831747110': 'הדמוקרטים',
+  'tiktok_7290475911811712007': 'הדמוקרטים',
+  'ig:622322028': 'ישר!',
+  'tw:216256233': 'ישראל ביתנו',
+  'insta_9879592011': 'ישראל ביתנו',
+  'fb:281777035357977': 'עוצמה יהודית',
+  'tw:917451193': 'שס',
+  'fb:433095953410548': 'שס',
+  'fb:429184557235927': 'הציונות הדתית',
+  'insta_10710272611': 'הציונות הדתית',
+  'insta_56562907387': 'ישר!',
+  'fb:105374555648078': 'ישר!',
+  'tw:353785044': 'הדמוקרטים',
+  'tw:23580789': 'הליכוד',
+  'insta_15013312622': 'הציונות הדתית',
+  'insta_28444128508': 'הדמוקרטים',
+  'fb:370270343005611': 'ישראל ביתנו',
+  'fb:396697410351933': 'ביחד',
+  'fb:664693323933235': 'שס',
+  'tw:1489280180459814918': 'שס',
+  'fb:1040192852853323': 'רעמ',
+  'insta_179711727': 'ביחד',
+  'insta_77342506623': 'ישר!',
+  'tw:17061263': 'הליכוד',
+  'ig:1171855176': 'ישר!',
+  'tw:1073683453210693632': 'הדמוקרטים',
+  'tw:3185280620': 'הציונות הדתית',
+  'tw:536652376': 'ישראל ביתנו',
+  'insta_10360534314': 'הדמוקרטים',
+  'tw:716347920287678464': 'עוצמה יהודית',
+  'fb:1099589829912265': 'ישר!',
+  'fb:175285029214345': 'הציונות הדתית',
+};
+const UNASSIGNED_PARTY_LABEL = 'ללא מפלגה';
+function getPartyForRow(r) {
+  return PARTY_MAP[r.authorId] || UNASSIGNED_PARTY_LABEL;
+}
 
 const ACCOUNT_METRICS = [
   {key:'engagement', label:'לפי מעורבות', pct:false},
@@ -444,7 +532,8 @@ const ACCOUNT_MIN_POSTS_FOR_PCT = 10;
 let allRows = [];
 let lastFilteredRows = [];
 let topAccountsMetric = 'engagement';
-let filters = {networks:new Set(), postTypes:new Set(), dateFrom:'', dateTo:'', phrase1:'', phrase2:'', op:'and'};
+let topAccountsViewMode = 'party';
+let filters = {networks:new Set(), postTypes:new Set(), parties:new Set(), dateFrom:'', dateTo:'', phrase1:'', phrase2:'', op:'and'};
 EXTRA_FILTER_FIELDS.forEach(f => filters[f.key] = new Set());
 let charts = {};
 
@@ -452,7 +541,7 @@ const els = {};
 ['sourceUrl','loadBtn','statusMsg','helpBox','filters','kpiRow','chartsGrid','metricsGrid','networkCard',
  'networkChips','dateFrom','dateTo','clearFilters','filterCount','countRow','feed',
  'networkLegend','sourceBar','phrase1','phrase2','opAnd','opOr','quick7','quick30',
- 'postTypeChips','postTypeCard','matricesGrid','acctSortSelect','exportExcelBtn','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
+ 'postTypeChips','postTypeCard','matricesGrid','partyMatricesGrid','partyChips','showUnassignedBtn','acctSortSelect','exportExcelBtn','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
 
 function detectNetwork(url) {
   if (!url) return 'אחר';
@@ -563,6 +652,7 @@ function buildFilters() {
   els.networkCard.style.display = 'block';
   els.postTypeCard.style.display = 'block';
   els.matricesGrid.style.display = 'grid';
+  els.partyMatricesGrid.style.display = 'grid';
 
   els.networkChips.innerHTML = '';
   filters.networks = new Set();
@@ -571,6 +661,15 @@ function buildFilters() {
   els.postTypeChips.innerHTML = '';
   filters.postTypes = new Set();
   [...new Set(allRows.map(r => r.post_type).filter(Boolean))].sort().forEach(t => makeChip(els.postTypeChips, t, filters.postTypes));
+
+  els.partyChips.innerHTML = '';
+  filters.parties = new Set();
+  const partyValues = [...new Set(allRows.map(r => getPartyForRow(r)))].sort((a, b) => {
+    if (a === UNASSIGNED_PARTY_LABEL) return 1;
+    if (b === UNASSIGNED_PARTY_LABEL) return -1;
+    return a.localeCompare(b, 'he');
+  });
+  partyValues.forEach(p => makeChip(els.partyChips, p, filters.parties));
 
   EXTRA_FILTER_FIELDS.forEach(f => {
     const container = document.getElementById(f.chipsId);
@@ -617,6 +716,7 @@ els.opOr.addEventListener('click', () => { filters.op='or'; els.opOr.classList.a
 els.clearFilters.addEventListener('click', () => {
   filters.networks.clear();
   filters.postTypes.clear();
+  filters.parties.clear();
   filters.dateFrom = ''; filters.dateTo = '';
   filters.phrase1 = ''; filters.phrase2 = ''; filters.op = 'and';
   els.phrase1.value = ''; els.phrase2.value = '';
@@ -626,6 +726,22 @@ els.clearFilters.addEventListener('click', () => {
   if (allRows.length) buildFilters();
   render();
 });
+
+function setPartyFilterOnly(partyLabel) {
+  filters.parties = new Set([partyLabel]);
+  const partyContainer = document.getElementById('partyChips');
+  if (partyContainer) {
+    Array.from(partyContainer.children).forEach(chip => {
+      chip.classList.toggle('active', chip.textContent === partyLabel);
+    });
+  }
+  topAccountsViewMode = 'account';
+  document.getElementById('viewByParty').classList.remove('active');
+  document.getElementById('viewByAccount').classList.add('active');
+  document.getElementById('topAccountsTitle').textContent = 'חשבונות מובילים';
+  render();
+}
+els.showUnassignedBtn.addEventListener('click', () => setPartyFilterOnly(UNASSIGNED_PARTY_LABEL));
 
 function matchesSearch(content) {
   const p1 = filters.phrase1, p2 = filters.phrase2;
@@ -641,6 +757,7 @@ function getFiltered() {
   return allRows.filter(r => {
     if (filters.networks.size && !filters.networks.has(r.network)) return false;
     if (filters.postTypes.size && !filters.postTypes.has(r.post_type)) return false;
+    if (filters.parties.size && !filters.parties.has(getPartyForRow(r))) return false;
     if (filters.dateFrom && r.published && r.published < new Date(filters.dateFrom)) return false;
     if (filters.dateTo && r.published && r.published > new Date(filters.dateTo + 'T23:59:59')) return false;
     if (!matchesSearch(r.content)) return false;
@@ -768,33 +885,37 @@ function showFilterTooltip(nativeEvent, chipsId, label) {
   }, 0);
 }
 
-function renderMatrix(containerId, rows, metricKey) {
+function renderMatrix(containerId, rows, metricKey, opts) {
+  opts = opts || {};
+  const keyFn = opts.keyFn || (r => r.extra['נושא']);
+  const headerLabel = opts.headerLabel || 'נושא';
+  const topN = opts.topN || 8;
   const container = document.getElementById(containerId);
-  const topicMetricCounts = {};
+  const rowMetricCounts = {};
   rows.forEach(r => {
-    const t = r.extra['נושא'], v = r.extra[metricKey];
-    if (t && v) topicMetricCounts[t] = (topicMetricCounts[t] || 0) + 1;
+    const t = keyFn(r), v = r.extra[metricKey];
+    if (t && v) rowMetricCounts[t] = (rowMetricCounts[t] || 0) + 1;
   });
-  const topics = Object.entries(topicMetricCounts).sort((a,b) => b[1] - a[1]).slice(0,8).map(e => e[0]);
+  const rowKeys = Object.entries(rowMetricCounts).sort((a,b) => b[1] - a[1]).slice(0,topN).map(e => e[0]);
   const valueSet = new Set();
   rows.forEach(r => { const v = r.extra[metricKey]; if (v) valueSet.add(v); });
   const values = [...valueSet].sort();
 
-  if (topics.length === 0 || values.length === 0) {
+  if (rowKeys.length === 0 || values.length === 0) {
     container.innerHTML = '<div class="no-data">אין מספיק נתונים מתויגים</div>';
     return;
   }
 
   const matrix = {};
-  topics.forEach(t => { matrix[t] = {}; values.forEach(v => matrix[t][v] = 0); });
+  rowKeys.forEach(t => { matrix[t] = {}; values.forEach(v => matrix[t][v] = 0); });
   rows.forEach(r => {
-    const t = r.extra['נושא'], v = r.extra[metricKey];
+    const t = keyFn(r), v = r.extra[metricKey];
     if (t && v && matrix[t] && matrix[t][v] !== undefined) matrix[t][v]++;
   });
 
-  let html = '<table class="matrix-table"><thead><tr><th>נושא</th>' +
+  let html = '<table class="matrix-table"><thead><tr><th>' + escapeHtml(headerLabel) + '</th>' +
     values.map(v => `<th>${escapeHtml(v)}</th>`).join('') + '<th>סה"כ</th></tr></thead><tbody>';
-  topics.forEach(t => {
+  rowKeys.forEach(t => {
     const rowTotal = values.reduce((s,v) => s + matrix[t][v], 0) || 1;
     html += `<tr><td class="matrix-row-label" title="${escapeHtml(t)}">${escapeHtml(t)}</td>` +
       values.map(v => {
@@ -837,11 +958,17 @@ function computeAccountValue(d, metricKey) {
   }
 }
 
+function partyBadge(party) {
+  const letter = (party || '?').trim().charAt(0) || '?';
+  return `<span class="acct-net-icon" style="background:linear-gradient(90deg,var(--purple),var(--pink))" title="${escapeHtml(party)}">${escapeHtml(letter)}</span>`;
+}
+
 function renderTopAccounts(rows) {
+  const byParty = topAccountsViewMode === 'party';
   const map = {};
   rows.forEach(r => {
-    const name = r.authorName || r.authorId || 'לא ידוע';
-    if (!map[name]) map[name] = {engagement:0, count:0, network:r.network, url:r.url, pos:0, neg:0, us:0, them:0, threat:0, solution:0};
+    const name = byParty ? getPartyForRow(r) : (r.authorName || r.authorId || 'לא ידוע');
+    if (!map[name]) map[name] = {engagement:0, count:0, network:r.network, url: byParty ? null : r.url, pos:0, neg:0, us:0, them:0, threat:0, solution:0};
     const d = map[name];
     d.engagement += r.engagement;
     d.count += 1;
@@ -870,7 +997,7 @@ function renderTopAccounts(rows) {
   const container = document.getElementById('topAccountsList');
   if (!entries.length) {
     container.innerHTML = metricCfg.pct
-      ? `<div class="no-data">אין חשבונות עם יותר מ-${ACCOUNT_MIN_POSTS_FOR_PCT} פוסטים בטווח הנוכחי</div>`
+      ? `<div class="no-data">אין ${byParty ? 'מפלגות' : 'חשבונות'} עם יותר מ-${ACCOUNT_MIN_POSTS_FOR_PCT} פוסטים בטווח הנוכחי</div>`
       : '<div class="no-data">אין נתונים</div>';
     return;
   }
@@ -881,11 +1008,12 @@ function renderTopAccounts(rows) {
     const displayVal = metricCfg.pct ? Math.round(val) + '%' : fmtNum(val);
     const nameHtml = d.url
       ? `<a href="${d.url}" target="_blank" rel="noopener" title="${escapeHtml(name)}">${escapeHtml(name)}</a>`
-      : escapeHtml(name);
+      : `<span title="${escapeHtml(name)}">${escapeHtml(name)}</span>`;
+    const badge = byParty ? partyBadge(name) : networkBadge(d.network);
     return `
     <div class="acct-row">
       <span class="acct-rank">${i+1}</span>
-      ${networkBadge(d.network)}
+      ${badge}
       <span class="acct-name">${nameHtml}</span>
       <div class="acct-bar-track"><div class="acct-bar-fill" style="width:${pct}%"></div></div>
       <span class="acct-value">${displayVal}</span>
@@ -897,6 +1025,16 @@ els.acctSortSelect.addEventListener('change', () => {
   topAccountsMetric = els.acctSortSelect.value;
   renderTopAccounts(lastFilteredRows);
 });
+
+function setTopAccountsViewMode(mode) {
+  topAccountsViewMode = mode;
+  document.getElementById('viewByParty').classList.toggle('active', mode === 'party');
+  document.getElementById('viewByAccount').classList.toggle('active', mode === 'account');
+  document.getElementById('topAccountsTitle').textContent = mode === 'party' ? 'מפלגות מובילות' : 'חשבונות מובילים';
+  renderTopAccounts(lastFilteredRows);
+}
+document.getElementById('viewByParty').addEventListener('click', () => setTopAccountsViewMode('party'));
+document.getElementById('viewByAccount').addEventListener('click', () => setTopAccountsViewMode('account'));
 
 function renderCharts(rows) {
   const dayMap = {};
@@ -919,6 +1057,7 @@ function renderCharts(rows) {
   });
   renderTopAccounts(rows);
   METRIC_CHARTS.forEach(m => renderMatrix(m.matrixId, rows, m.key));
+  METRIC_CHARTS.forEach(m => renderMatrix(m.partyMatrixId, rows, m.key, {keyFn: getPartyForRow, headerLabel: 'מפלגה', topN: 12}));
 
   const topicMap = groupCount(rows, r => r.extra['נושא']);
   const topicEntries = Object.entries(topicMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
@@ -1002,6 +1141,8 @@ function exportToExcel() {
   if (!lastFilteredRows.length) { alert('אין נתונים מסוננים לייצוא'); return; }
   const data = lastFilteredRows.map(r => ({
     'שם/מזהה': r.authorName || r.authorId || '',
+    'מזהה חשבון (authorId)': r.authorId || '',
+    'מפלגה משויכת': getPartyForRow(r),
     'רשת': r.network,
     'סוג פוסט': r.post_type,
     'תאריך פרסום': r.published ? fmtDateTime(r.published) : '',
