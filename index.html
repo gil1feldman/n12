@@ -104,7 +104,7 @@
   .card-head h3{margin:0;}
   .export-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-size:13px;line-height:1;cursor:pointer;user-select:none;}
   .export-icon-btn:hover{border-color:var(--pink);color:var(--purple);background:var(--pink-light);}
-  .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;}
+  .metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
   @media(max-width:900px){.charts-grid{grid-template-columns:1fr;}.metrics-grid{grid-template-columns:1fr 1fr;}}
   .legend-html{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:10px;font-size:11px;color:var(--ink-2);}
   .legend-html .li{display:flex;align-items:center;gap:5px;}
@@ -279,16 +279,12 @@
       <div class="filter-unit">
         <span class="flabel">מפלגה</span>
         <div class="chips" id="partyChips"></div>
-        <span class="chip" id="showUnassignedBtn" style="border-style:dashed;">הצג רק ללא מפלגה</span>
+        <span class="chip" id="includeUnassignedToggle" style="border-style:dashed;">הצג גם פוסטים ללא מפלגה</span>
       </div>
       <div class="divider"></div>
       <div class="filter-unit" id="topicGroup" style="display:none;">
         <span class="flabel">נושא</span>
         <div class="chips" id="topicChips"></div>
-      </div>
-      <div class="filter-unit" id="posGroup" style="display:none;">
-        <span class="flabel">סנטימנט</span>
-        <div class="chips" id="posChips"></div>
       </div>
       <div class="filter-unit" id="usThemGroup" style="display:none;">
         <span class="flabel">אנחנו/הם</span>
@@ -339,11 +335,6 @@
 
   <div class="metrics-grid" id="metricsGrid" style="display:none;">
     <div class="chart-card">
-      <div class="card-head"><h3>סנטימנט</h3><span class="export-icon-btn" data-export-id="posChart" data-export-label="סנטימנט" title="ייצוא לאקסל">⬇</span></div>
-      <div style="position:relative;height:150px;"><canvas id="posChart" role="img" aria-label="גרף התפלגות סנטימנט">סנטימנט</canvas></div>
-      <div class="legend-html" id="posLegend"></div>
-    </div>
-    <div class="chart-card">
       <div class="card-head"><h3>אנחנו או הם</h3><span class="export-icon-btn" data-export-id="usThemChart" data-export-label="אנחנו או הם" title="ייצוא לאקסל">⬇</span></div>
       <div style="position:relative;height:150px;"><canvas id="usThemChart" role="img" aria-label="גרף התפלגות אנחנו או הם">אנחנו או הם</canvas></div>
       <div class="legend-html" id="usThemLegend"></div>
@@ -384,8 +375,6 @@
             <select class="acct-select" id="acctSortSelect">
         <option value="engagement" selected>לפי מעורבות</option>
         <option value="count">לפי מספר פוסטים</option>
-        <option value="posPct">אחוז סנטימנט חיובי</option>
-        <option value="negPct">אחוז סנטימנט שלילי</option>
         <option value="usPct">אחוז אנחנו</option>
         <option value="themPct">אחוז הם</option>
         <option value="threatPct">אחוז עם איום/הפחדה</option>
@@ -401,10 +390,6 @@
     <h2>התפלגות מדדים לפי נושא</h2>
   </div>
   <div class="metrics-grid" id="matricesGrid" style="display:none;grid-template-columns:1fr 1fr;">
-    <div class="chart-card">
-      <div class="card-head"><h3>סנטימנט לפי נושא</h3><span class="export-icon-btn" data-export-id="posMatrix" data-export-label="סנטימנט לפי נושא" title="ייצוא לאקסל">⬇</span></div>
-      <div id="posMatrix"></div>
-    </div>
     <div class="chart-card">
       <div class="card-head"><h3>אנחנו או הם לפי נושא</h3><span class="export-icon-btn" data-export-id="usThemMatrix" data-export-label="אנחנו או הם לפי נושא" title="ייצוא לאקסל">⬇</span></div>
       <div id="usThemMatrix"></div>
@@ -423,10 +408,6 @@
     <h2>התפלגות מדדים לפי מפלגה</h2>
   </div>
   <div class="metrics-grid" id="partyMatricesGrid" style="display:none;grid-template-columns:1fr 1fr;">
-    <div class="chart-card">
-      <div class="card-head"><h3>סנטימנט לפי מפלגה</h3><span class="export-icon-btn" data-export-id="posPartyMatrix" data-export-label="סנטימנט לפי מפלגה" title="ייצוא לאקסל">⬇</span></div>
-      <div id="posPartyMatrix"></div>
-    </div>
     <div class="chart-card">
       <div class="card-head"><h3>אנחנו או הם לפי מפלגה</h3><span class="export-icon-btn" data-export-id="usThemPartyMatrix" data-export-label="אנחנו או הם לפי מפלגה" title="ייצוא לאקסל">⬇</span></div>
       <div id="usThemPartyMatrix"></div>
@@ -457,13 +438,11 @@
 <script>
 const EXTRA_FILTER_FIELDS = [
   {key:'נושא', chipsId:'topicChips', groupId:'topicGroup'},
-  {key:'מדד פוזיטיביות', chipsId:'posChips', groupId:'posGroup'},
   {key:'אנחנו או הם', chipsId:'usThemChips', groupId:'usThemGroup'},
   {key:'קיים איום/הפחדה', chipsId:'threatChips', groupId:'threatGroup'},
   {key:'יש הצעה לפתרון', chipsId:'solutionChips', groupId:'solutionGroup'}
 ];
 const METRIC_CHARTS = [
-  {key:'מדד פוזיטיביות', canvasId:'posChart', legendId:'posLegend', matrixId:'posMatrix', partyMatrixId:'posPartyMatrix'},
   {key:'אנחנו או הם', canvasId:'usThemChart', legendId:'usThemLegend', matrixId:'usThemMatrix', partyMatrixId:'usThemPartyMatrix'},
   {key:'קיים איום/הפחדה', canvasId:'threatChart', legendId:'threatLegend', matrixId:'threatMatrix', partyMatrixId:'threatPartyMatrix'},
   {key:'יש הצעה לפתרון', canvasId:'solutionChart', legendId:'solutionLegend', matrixId:'solutionMatrix', partyMatrixId:'solutionPartyMatrix'}
@@ -529,8 +508,6 @@ function getPartyForRow(r) {
 const ACCOUNT_METRICS = [
   {key:'engagement', label:'לפי מעורבות', pct:false},
   {key:'count', label:'לפי מספר פוסטים', pct:false},
-  {key:'posPct', label:'אחוז סנטימנט חיובי', pct:true},
-  {key:'negPct', label:'אחוז סנטימנט שלילי', pct:true},
   {key:'usPct', label:'אחוז אנחנו', pct:true},
   {key:'themPct', label:'אחוז הם', pct:true},
   {key:'threatPct', label:'אחוז עם איום/הפחדה', pct:true},
@@ -541,6 +518,7 @@ let allRows = [];
 let lastFilteredRows = [];
 let topAccountsMetric = 'engagement';
 let topAccountsViewMode = 'party';
+let includeUnassigned = false;
 let filters = {networks:new Set(), postTypes:new Set(), parties:new Set(), dateFrom:'', dateTo:'', phrase1:'', phrase2:'', op:'and'};
 EXTRA_FILTER_FIELDS.forEach(f => filters[f.key] = new Set());
 let charts = {};
@@ -550,7 +528,7 @@ const els = {};
 ['sourceUrl','loadBtn','statusMsg','helpBox','filters','kpiRow','chartsGrid','metricsGrid','networkCard',
  'networkChips','dateFrom','dateTo','clearFilters','filterCount','countRow','feed',
  'networkLegend','sourceBar','phrase1','phrase2','opAnd','opOr','quick7','quick30',
- 'postTypeChips','postTypeCard','matricesGrid','partyMatricesGrid','partyChips','showUnassignedBtn','acctSortSelect','exportExcelBtn','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
+ 'postTypeChips','postTypeCard','matricesGrid','partyMatricesGrid','partyChips','includeUnassignedToggle','acctSortSelect','exportExcelBtn','dataFreshness','loadingScreen'].forEach(id => els[id] = document.getElementById(id));
 
 function detectNetwork(url) {
   if (!url) return 'אחר';
@@ -673,6 +651,8 @@ function buildFilters() {
 
   els.partyChips.innerHTML = '';
   filters.parties = new Set();
+  includeUnassigned = false;
+  if (els.includeUnassignedToggle) els.includeUnassignedToggle.classList.remove('active');
   const partyValues = [...new Set(allRows.map(r => getPartyForRow(r)))].sort((a, b) => {
     if (a === UNASSIGNED_PARTY_LABEL) return 1;
     if (b === UNASSIGNED_PARTY_LABEL) return -1;
@@ -726,6 +706,7 @@ els.clearFilters.addEventListener('click', () => {
   filters.networks.clear();
   filters.postTypes.clear();
   filters.parties.clear();
+  includeUnassigned = false;
   filters.dateFrom = ''; filters.dateTo = '';
   filters.phrase1 = ''; filters.phrase2 = ''; filters.op = 'and';
   els.phrase1.value = ''; els.phrase2.value = '';
@@ -736,21 +717,12 @@ els.clearFilters.addEventListener('click', () => {
   render();
 });
 
-function setPartyFilterOnly(partyLabel) {
-  filters.parties = new Set([partyLabel]);
-  const partyContainer = document.getElementById('partyChips');
-  if (partyContainer) {
-    Array.from(partyContainer.children).forEach(chip => {
-      chip.classList.toggle('active', chip.textContent === partyLabel);
-    });
-  }
-  topAccountsViewMode = 'account';
-  document.getElementById('viewByParty').classList.remove('active');
-  document.getElementById('viewByAccount').classList.add('active');
-  document.getElementById('topAccountsTitle').textContent = 'חשבונות מובילים';
+function toggleIncludeUnassigned() {
+  includeUnassigned = !includeUnassigned;
+  els.includeUnassignedToggle.classList.toggle('active', includeUnassigned);
   render();
 }
-els.showUnassignedBtn.addEventListener('click', () => setPartyFilterOnly(UNASSIGNED_PARTY_LABEL));
+els.includeUnassignedToggle.addEventListener('click', toggleIncludeUnassigned);
 
 function matchesSearch(content) {
   const p1 = filters.phrase1, p2 = filters.phrase2;
@@ -766,7 +738,11 @@ function getFiltered() {
   return allRows.filter(r => {
     if (filters.networks.size && !filters.networks.has(r.network)) return false;
     if (filters.postTypes.size && !filters.postTypes.has(r.post_type)) return false;
-    if (filters.parties.size && !filters.parties.has(getPartyForRow(r))) return false;
+    if (filters.parties.size) {
+      if (!filters.parties.has(getPartyForRow(r))) return false;
+    } else if (!includeUnassigned && getPartyForRow(r) === UNASSIGNED_PARTY_LABEL) {
+      return false;
+    }
     if (filters.dateFrom && r.published && r.published < new Date(filters.dateFrom)) return false;
     if (filters.dateTo && r.published && r.published > new Date(filters.dateTo + 'T23:59:59')) return false;
     if (!matchesSearch(r.content)) return false;
@@ -802,20 +778,15 @@ function highlight(content) {
 function renderKPIs(rows) {
   const engagement = rows.reduce((s,r)=>s+r.engagement,0);
   const reach = rows.reduce((s,r)=>s+r.reach,0);
-  const withPos = rows.filter(r=>r.extra['מדד פוזיטיביות']);
-  const dominant = mostCommon(rows.map(r=>r.extra['מדד פוזיטיביות']).filter(Boolean));
   componentExportData.kpi = [{
     'רשומות': rows.length,
     'מעורבות מצטברת': engagement,
-    'חשיפה מצטברת': reach,
-    'סנטימנט דומיננטי': dominant || '',
-    'רשומות מתויגות סנטימנט': withPos.length
+    'חשיפה מצטברת': reach
   }];
   els.kpiRow.innerHTML = `
     <div class="kpi-card"><div class="kpi-label">רשומות</div><div class="kpi-value">${fmtNum(rows.length)}</div></div>
     <div class="kpi-card"><div class="kpi-label">מעורבות מצטברת</div><div class="kpi-value grad">${fmtNum(engagement)}</div></div>
     <div class="kpi-card"><div class="kpi-label">חשיפה מצטברת</div><div class="kpi-value grad">${fmtNum(reach)}</div></div>
-    <div class="kpi-card"><div class="kpi-label">סנטימנט דומיננטי</div><div class="kpi-value" style="font-size:17px;">${dominant || '—'}</div><div class="kpi-sub">${withPos.length} רשומות מתויגות</div></div>
   `;
 }
 
@@ -974,8 +945,6 @@ function computeAccountValue(d, metricKey) {
   switch (metricKey) {
     case 'engagement': return d.engagement;
     case 'count': return d.count;
-    case 'posPct': return d.count ? (d.pos / d.count) * 100 : 0;
-    case 'negPct': return d.count ? (d.neg / d.count) * 100 : 0;
     case 'usPct': return d.count ? (d.us / d.count) * 100 : 0;
     case 'themPct': return d.count ? (d.them / d.count) * 100 : 0;
     case 'threatPct': return d.count ? (d.threat / d.count) * 100 : 0;
@@ -994,14 +963,10 @@ function renderTopAccounts(rows) {
   const map = {};
   rows.forEach(r => {
     const name = byParty ? getPartyForRow(r) : (r.authorName || r.authorId || 'לא ידוע');
-    if (!map[name]) map[name] = {engagement:0, count:0, network:r.network, url: byParty ? null : r.url, pos:0, neg:0, us:0, them:0, threat:0, solution:0};
+    if (!map[name]) map[name] = {engagement:0, count:0, network:r.network, url: byParty ? null : r.url, us:0, them:0, threat:0, solution:0};
     const d = map[name];
     d.engagement += r.engagement;
     d.count += 1;
-
-    const sentiment = r.extra['מדד פוזיטיביות'] || '';
-    if (sentiment.includes('חיוב')) d.pos++;
-    if (sentiment.includes('שליל')) d.neg++;
 
     const usThem = r.extra['אנחנו או הם'] || '';
     if (usThem === 'אנחנו') d.us++;
@@ -1033,8 +998,6 @@ function renderTopAccounts(rows) {
     'רשת': d.network || '',
     'פוסטים': d.count,
     'מעורבות': d.engagement,
-    'אחוז סנטימנט חיובי': d.count ? Math.round((d.pos / d.count) * 100) : 0,
-    'אחוז סנטימנט שלילי': d.count ? Math.round((d.neg / d.count) * 100) : 0,
     'אחוז אנחנו': d.count ? Math.round((d.us / d.count) * 100) : 0,
     'אחוז הם': d.count ? Math.round((d.them / d.count) * 100) : 0,
     'אחוז עם איום/הפחדה': d.count ? Math.round((d.threat / d.count) * 100) : 0,
@@ -1133,22 +1096,19 @@ function render() {
   }
 
   els.feed.innerHTML = filtered.map((r, i) => {
-    const pos = r.extra['מדד פוזיטיביות'] || '';
     const usThem = r.extra['אנחנו או הם'] || '';
     const threat = r.extra['קיים איום/הפחדה'] || '';
     const solution = r.extra['יש הצעה לפתרון'] || '';
     const threatOn = /^כן|yes/i.test(threat) ? 'on-flag' : '';
     const solutionOn = /^כן|yes/i.test(solution) ? 'on-pos' : '';
     const usThemOn = usThem ? 'on-neg' : '';
-    const posOn = pos ? 'on-pos' : '';
     const tags = [];
     if (r.extra['נושא']) tags.push(`<span class="tag topic">${escapeHtml(r.extra['נושא'])}</span>`);
     if (usThem) tags.push(`<span class="tag">${escapeHtml(usThem)}</span>`);
-    if (pos) tags.push(`<span class="tag">${escapeHtml(pos)}</span>`);
     return `
     <div class="post">
-      <div class="signal-stripe" title="סנטימנט / אנחנו-הם / איום / פתרון">
-        <div class="seg ${posOn}"></div><div class="seg ${usThemOn}"></div><div class="seg ${threatOn}"></div><div class="seg ${solutionOn}"></div>
+      <div class="signal-stripe" title="אנחנו-הם / איום / פתרון">
+        <div class="seg ${usThemOn}"></div><div class="seg ${threatOn}"></div><div class="seg ${solutionOn}"></div>
       </div>
       <div class="post-main">
         <div class="post-head">
@@ -1191,7 +1151,6 @@ function exportToExcel() {
     'מעורבות': r.engagement,
     'חשיפה': r.reach,
     'נושא': r.extra['נושא'] || '',
-    'סנטימנט': r.extra['מדד פוזיטיביות'] || '',
     'אנחנו או הם': r.extra['אנחנו או הם'] || '',
     'איום/הפחדה': r.extra['קיים איום/הפחדה'] || '',
     'הצעת פתרון': r.extra['יש הצעה לפתרון'] || '',
